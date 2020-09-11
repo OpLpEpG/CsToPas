@@ -561,12 +561,36 @@ namespace XMLScemaToDelphi
 
         [return: MarshalAs(UnmanagedType.I4)]
         decimal MaxOccurs();
+        ///
+        /// Сводка:
+        ///     Возвращает или задает число как строковое значение. Минимальное количество раз,
+        ///     которое может встречаться фрагмент.
+        ///
+        /// Возврат:
+        ///     Число как строковое значение. String.Empty Указывает, что MinOccurs равно значению
+        ///     по умолчанию. Значение по умолчанию: пустая ссылка.
+        /// [XmlAttribute("minOccurs")]
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string MinOccursString();
+        ///
+        /// Сводка:
+        ///     Возвращает или задает число как строковое значение. Максимальное количество раз,
+        ///     которое может встречаться фрагмент.
+        ///
+        /// Возврат:
+        ///     Число как строковое значение. String.Empty Указывает, что MaxOccurs равно значению
+        ///     по умолчанию. Значение по умолчанию: пустая ссылка.
+        /// [XmlAttribute("maxOccurs")]
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string MaxOccursString();
     }
     public abstract class TXmlSchemaParticle : TXmlSchemaAnnotated, IXmlSchemaParticle, IXmlSchemaAnnotated, IXmlSchemaObject
     {
         public TXmlSchemaParticle(XmlSchemaParticle p) : base(p) { }
         decimal IXmlSchemaParticle.MinOccurs() => (x as XmlSchemaParticle).MinOccurs;
         decimal IXmlSchemaParticle.MaxOccurs() => (x as XmlSchemaParticle).MaxOccurs;
+        string IXmlSchemaParticle.MinOccursString() => (x as XmlSchemaParticle).MinOccursString;
+        string IXmlSchemaParticle.MaxOccursString() => (x as XmlSchemaParticle).MaxOccursString;
         public static IXmlSchemaParticle GetPaticle(XmlSchemaParticle p)
         {
             if (p is XmlSchemaAll) return new TXmlSchemaAll(p as XmlSchemaAll);
@@ -574,6 +598,7 @@ namespace XMLScemaToDelphi
             else if (p is XmlSchemaSequence) return new TXmlSchemaSequence(p as XmlSchemaSequence);
             else if (p is XmlSchemaGroupRef) return new TXmlSchemaGroupRef(p as XmlSchemaGroupRef);
             else if (p is XmlSchemaAny) return new TXmlSchemaAny(p as XmlSchemaAny);
+//            else if (p is XmlSchemaElement) return new TXmlSchemaElement(p as XmlSchemaElement);
             else return null;
         }
 
@@ -1319,243 +1344,9 @@ namespace XMLScemaToDelphi
         [DllExport(CallingConvention = CallingConvention.StdCall)]
         public static void GetXmlSchemaAttribute(XmlSchemaObject a, out IXmlSchemaAttribute OutD) => OutD = new TXmlSchemaAttribute(a as XmlSchemaAttribute);
     }
-/// <summary>
-/// Schema Set
-/// </summary>
-    /*  ======= интерфейс реализован в Delphi ============
-        ICSharpXMLValidatorCallBack = interface
-            ['{AE7AF832-8353-48DC-966D-E6FE7737F171}']
-            procedure ValidationCallback(SeverityType: integer; ErrorMessage: PChar); safecall;
-        end; 
-    ============================================= */
-    [ComImport, Guid("AE7AF832-8353-48DC-966D-E6FE7737F171"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface IXMLValidatorCallBack
-    {
-
-        void ValidationCallback([MarshalAs(UnmanagedType.I4)] XmlSeverityType SeverityType,
-                            [MarshalAs(UnmanagedType.LPWStr)] string ErrorMessage);
-    }
-
-    [ComImport, Guid("79CED196-FC1C-4032-8CB8-A6CD1E6C305C"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface IXmlNamespaceManager
-    {
-        ///
-        /// Сводка:
-        ///     Возвращает универсальный код ресурса (URI) для пространства имен по умолчанию.
-        ///
-        /// Возврат:
-        ///     Возвращает URI для пространства имен по умолчанию или String.Empty, если пространство
-        ///     имен по умолчанию отсутствует.
-        [return: MarshalAs(UnmanagedType.LPWStr)]
-        string DefaultNamespace();
-        ///
-        /// Сводка:
-        ///     Возвращает значение, указывающее, определено ли пространство имен для указанного
-        ///     префикса в текущей области видимости, занесенной в стек.
-        ///
-        /// Параметры:
-        ///   prefix:
-        ///     Префикс пространства имен, которое требуется найти.
-        ///
-        /// Возврат:
-        ///     trueЕсли имеется определенное пространство имен; в противном случае false.
-        [return: MarshalAs(UnmanagedType.U1)]
-        bool HasNamespace([MarshalAs(UnmanagedType.LPWStr)] string prefix);
-        ///
-        /// Сводка:
-        ///     Возвращает URI пространства имен для указанного префикса.
-        ///
-        /// Параметры:
-        ///   prefix:
-        ///     Префикс, для которого требуется разрешить URI пространства имен. Чтобы сопоставить
-        ///     пространство имен по умолчанию, необходимо передать String.Empty.
-        ///
-        /// Возврат:
-        ///     Возвращает URI пространства имен для prefix или null Если соответствующее пространство
-        ///     имен отсутствует. Возвращаемая строка является атомизированной. Дополнительные
-        ///     сведения о разъединенных строках см. в разделе System.Xml.XmlNameTable класса.
-        [return: MarshalAs(UnmanagedType.LPWStr)]
-        string LookupNamespace([MarshalAs(UnmanagedType.LPWStr)] string prefix);
-        ///
-        /// Сводка:
-        ///     Находит префикс, объявленный для заданного URI пространства имен.
-        ///
-        /// Параметры:
-        ///   uri:
-        ///     Пространство имен, чтобы разрешить для получения префикса.
-        ///
-        /// Возврат:
-        ///     Соответствующий префикс. Если нет сопоставленного префикса, данный метод возвращает
-        ///     String.Empty. Если указано значение null, затем null возвращается.
-        [return: MarshalAs(UnmanagedType.LPWStr)]
-        string LookupPrefix([MarshalAs(UnmanagedType.LPWStr)] string uri);
-    }
-    public class TXmlNamespaceManager : IXmlNamespaceManager
-    {
-        public readonly XmlNamespaceManager m;
-        public TXmlNamespaceManager(XmlNameTable nameTable)=> m = new XmlNamespaceManager(nameTable);
-        string IXmlNamespaceManager.DefaultNamespace() => m.DefaultNamespace;
-        bool IXmlNamespaceManager.HasNamespace(string prefix) => m.HasNamespace(prefix);
-        string IXmlNamespaceManager.LookupNamespace(string prefix) => m.LookupNamespace(prefix);
-        string IXmlNamespaceManager.LookupPrefix(string uri) => m.LookupPrefix(uri);
-    }
-    [ComImport, Guid("CEAD7A91-2DAC-44E1-8425-F32E1A23DCE3"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface IXmlSchemaSet
-    {
-        IXmlNamespaceManager Namespace();
-        //
-        // Сводка:
-        //     Получает все глобальные атрибуты в определении схемы XML схем языка XSD в System.Xml.Schema.XmlSchemaSet.
-        //
-        // Возврат:
-        //     Коллекция глобальных атрибутов.
-        IXmlSchemaObjectTable GlobalAttributes();
-        //
-        // Сводка:
-        //     Получает все глобальные элементы в определении схемы XML схем языка XSD в System.Xml.Schema.XmlSchemaSet.
-        //
-        // Возврат:
-        //     Коллекция глобальных элементов.         
-        IXmlSchemaObjectTable GlobalElements();
-        //
-        // Сводка:
-        //     Получает все глобальные простые и сложные типы в определении схемы XML схем языка
-        //     XSD в System.Xml.Schema.XmlSchemaSet.
-        //
-        // Возврат:
-        //     Коллекция глобальных простых и сложных типов.         
-        IXmlSchemaObjectTable GlobalTypes();
-        void Add([MarshalAs(UnmanagedType.LPWStr)] string nameSpase, [MarshalAs(UnmanagedType.LPWStr)] string FileName);
-        void Compile();
-        //
-        // Сводка:
-        //     Возвращает значение, указывающее, является ли схемами языка определения схемы
-        //     XML в System.Xml.Schema.XmlSchemaSet были скомпилированы.
-        //
-        // Возврат:
-        //     true Если схемы в System.Xml.Schema.XmlSchemaSet были скомпилированы с момента
-        //     последнего схемы был добавлен или удален из System.Xml.Schema.XmlSchemaSet; в
-        //     противном случае — false.
-        [return: MarshalAs(UnmanagedType.U1)]
-        bool IsCompiled();
-        //
-        // Сводка:
-        //     Указывает обработчик событий, получающий сведения об ошибках проверки схем языка
-        //     определения схем XML (XSD).
-        void AddValidationEventHandler(IXMLValidatorCallBack v);
-        //
-        // Сводка:
-        //     Повторная обработка схему языка XSD определения схемы XML, который уже существует
-        //     в System.Xml.Schema.XmlSchemaSet.
-        //
-        // Параметры:
-        //   schema:
-        //     Схема, которую необходимо обработать повторно.
-        //
-        // Возврат:
-        //     System.Xml.Schema.XmlSchema Объекта, если схема является допустимой схемой. Если
-        //     схема не является допустимым и System.Xml.Schema.ValidationEventHandler указан,
-        //     null возвращается и возникает соответствующее событие проверки. В противном случае
-        //     — System.Xml.Schema.XmlSchemaException возникает исключение.
-        //
-        // Исключения:
-        //   T:System.Xml.Schema.XmlSchemaException:
-        //     Недопустимая схема.
-        //
-        //   T:System.ArgumentNullException:
-        //     System.Xml.Schema.XmlSchema Объект, передаваемый как параметр — null.
-        //
-        //   T:System.ArgumentException:
-        //     System.Xml.Schema.XmlSchema Объект, передаваемый как параметр еще не существует
-        //     в System.Xml.Schema.XmlSchemaSet.
-        IXmlSchema Reprocess(IXmlSchema schema);
-        //
-        // Сводка:
-        //     Возвращает коллекцию всех определения схемы XML схем языка XSD в System.Xml.Schema.XmlSchemaSet.
-        //
-        // Возврат:
-        //     System.Collections.ICollection Объект, содержащий все схемы, которые были добавлены
-        //     в System.Xml.Schema.XmlSchemaSet. Если схемы не были добавлены в System.Xml.Schema.XmlSchemaSet,
-        //     пустой System.Collections.ICollection возвращается объект.
-        IXMLEnumerable Schemas();
-        //
-        // Сводка:
-        //     Возвращает коллекцию всех определения схемы XML схем языка XSD в System.Xml.Schema.XmlSchemaSet
-        //     относящихся к данному пространству имен.
-        //
-        // Параметры:
-        //   targetNamespace:
-        //     Схема targetNamespace свойство.
-        //
-        // Возврат:
-        //     System.Collections.ICollection Объект, содержащий все схемы, которые были добавлены
-        //     в System.Xml.Schema.XmlSchemaSet относящихся к данному пространству имен. Если
-        //     схемы не были добавлены в System.Xml.Schema.XmlSchemaSet, пустой System.Collections.ICollection
-        //     возвращается объект.
-        IXMLEnumerable Schemas([MarshalAs(UnmanagedType.LPWStr)] string targetNamespace);
-        void Validate([MarshalAs(UnmanagedType.LPWStr)] string FileName);
-    }
-    public class TXmlSchemaSet : IXmlSchemaSet
-    {
-        private TXmlNamespaceManager m;
-        private IXMLValidatorCallBack cbk;
-        private readonly XmlSchemaSet s;
-        public TXmlSchemaSet()
-        {
-            s = new XmlSchemaSet();
-            s.XmlResolver = new XmlUrlResolver(); // ОБЯЗАТЕЛЬНО!!!
-            s.ValidationEventHandler += new ValidationEventHandler(ValidationCallback);
-            m = new TXmlNamespaceManager(s.NameTable);
-        }
-        void ValidationCallback(object sender, ValidationEventArgs args)=> cbk?.ValidationCallback(args.Severity, args.Message);
-        IXmlSchemaObjectTable IXmlSchemaSet.GlobalAttributes() => new TXmlSchemaObjectTable(s.GlobalAttributes);
-        public IXmlNamespaceManager Namespace() => m;
-        IXmlSchemaObjectTable IXmlSchemaSet.GlobalElements() => new TXmlSchemaObjectTable(s.GlobalElements);
-        IXmlSchemaObjectTable IXmlSchemaSet.GlobalTypes() => new TXmlSchemaObjectTable(s.GlobalTypes);
-        void IXmlSchemaSet.Add(string nameSpase, string FileName) => s.Add(nameSpase, FileName);
-        void IXmlSchemaSet.Compile()
-        {
-            s.Compile();
-            foreach(XmlSchema s in s.Schemas())
-            {
-                foreach(XmlQualifiedName n in s.Namespaces.ToArray())
-                {
-                    m.m.AddNamespace(n.Name, n.Namespace);
-                }
-            }
-        }
-            
-        bool IXmlSchemaSet.IsCompiled() => s.IsCompiled;
-        void IXmlSchemaSet.AddValidationEventHandler(IXMLValidatorCallBack v) => cbk = v;
-        IXmlSchema IXmlSchemaSet.Reprocess(IXmlSchema schema) => new TXmlSchema(s.Reprocess((schema as TXmlSchema).s));
-        IXMLEnumerable IXmlSchemaSet.Schemas() => new TXMLEnumerable(s.Schemas());
-        IXMLEnumerable IXmlSchemaSet.Schemas(string targetNamespace) => new TXMLEnumerable(s.Schemas(targetNamespace));
-        void IXmlSchemaSet.Validate(string FileName)
-        {
-            XmlReaderSettings settings = new XmlReaderSettings
-            {
-                ValidationType = ValidationType.Schema,
-                Schemas = s
-            };
-            settings.ValidationEventHandler += ValidationCallback;
-
-            try
-            {
-                XmlReader reader = XmlReader.Create(FileName, settings);
-                // Parse the file.
-                while (reader.Read()) { };
-            }
-            catch (Exception e)
-            {
-                cbk.ValidationCallback(XmlSeverityType.Error, FileName + " | " + e.Message);
-            }
-        }
-        [DllExport(CallingConvention = CallingConvention.StdCall)]
-        public static void GetXmlSchemaSet(out IXmlSchemaSet OutD) => OutD = new TXmlSchemaSet();
-    }
-/// <summary>
-/// Misc
-/// </summary>
+    /// <summary>
+    /// Misc
+    /// </summary>
     [ComImport, Guid("D969D90F-16C4-4463-848B-1E8B255286B2"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IXmlSchemaGroup
     {
@@ -1708,7 +1499,7 @@ namespace XMLScemaToDelphi
     }
     public class TXmlSchemaAnnotation : TXmlSchemaObject, IXmlSchemaAnnotation
     {
-        public TXmlSchemaAnnotation(XmlSchemaAnnotation a) : base(a) { } 
+        public TXmlSchemaAnnotation(XmlSchemaAnnotation a) : base(a) { }
         string IXmlSchemaAnnotation.GetAnnotation()
         {
             return TXmlSchemaAnnotated.GetDoc(x as XmlSchemaAnnotation);
@@ -1748,7 +1539,7 @@ namespace XMLScemaToDelphi
         [return: MarshalAs(UnmanagedType.LPWStr)]
         string Id();
     }
-    public abstract class TXmlSchemaExternal: TXmlSchemaObject, IXmlSchemaObject, IXmlSchemaExternal
+    public abstract class TXmlSchemaExternal : TXmlSchemaObject, IXmlSchemaObject, IXmlSchemaExternal
     {
         protected TXmlSchemaExternal(XmlSchemaExternal ex) : base(ex) { }
         string IXmlSchemaExternal.SchemaLocation() => (x as XmlSchemaExternal).SchemaLocation;
@@ -1837,11 +1628,1482 @@ namespace XMLScemaToDelphi
         [return: MarshalAs(UnmanagedType.U4)]
         XmlSchemaContentProcessing ProcessContents();
     }
-    public class TXmlSchemaAny: TXmlSchemaParticle, IXmlSchemaAny, IXmlSchemaParticle, IXmlSchemaAnnotated, IXmlSchemaObject
+    public class TXmlSchemaAny : TXmlSchemaParticle, IXmlSchemaAny, IXmlSchemaParticle, IXmlSchemaAnnotated, IXmlSchemaObject
     {
         public TXmlSchemaAny(XmlSchemaAny a) : base(a) { }
         string IXmlSchemaAny.Namespace() => (x as XmlSchemaAny).Namespace;
         XmlSchemaContentProcessing IXmlSchemaAny.ProcessContents() => (x as XmlSchemaAny).ProcessContents;
+    }
+
+    /// <summary>
+    /// Schema Set
+    /// </summary>
+    /*  ======= интерфейс реализован в Delphi ============
+        ICSharpXMLValidatorCallBack = interface
+            ['{AE7AF832-8353-48DC-966D-E6FE7737F171}']
+            procedure ValidationCallback(SeverityType: integer; ErrorMessage: PChar); safecall;
+        end; 
+    ============================================= */
+    [ComImport, Guid("AE7AF832-8353-48DC-966D-E6FE7737F171"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IXMLValidatorCallBack
+    {
+
+        void ValidationCallback([MarshalAs(UnmanagedType.I4)] XmlSeverityType SeverityType,
+                            [MarshalAs(UnmanagedType.LPWStr)] string ErrorMessage);
+    }
+
+    [ComImport, Guid("79CED196-FC1C-4032-8CB8-A6CD1E6C305C"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IXmlNamespaceManager
+    {
+        ///
+        /// Сводка:
+        ///     Возвращает универсальный код ресурса (URI) для пространства имен по умолчанию.
+        ///
+        /// Возврат:
+        ///     Возвращает URI для пространства имен по умолчанию или String.Empty, если пространство
+        ///     имен по умолчанию отсутствует.
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string DefaultNamespace();
+        ///
+        /// Сводка:
+        ///     Возвращает значение, указывающее, определено ли пространство имен для указанного
+        ///     префикса в текущей области видимости, занесенной в стек.
+        ///
+        /// Параметры:
+        ///   prefix:
+        ///     Префикс пространства имен, которое требуется найти.
+        ///
+        /// Возврат:
+        ///     trueЕсли имеется определенное пространство имен; в противном случае false.
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool HasNamespace([MarshalAs(UnmanagedType.LPWStr)] string prefix);
+        ///
+        /// Сводка:
+        ///     Возвращает URI пространства имен для указанного префикса.
+        ///
+        /// Параметры:
+        ///   prefix:
+        ///     Префикс, для которого требуется разрешить URI пространства имен. Чтобы сопоставить
+        ///     пространство имен по умолчанию, необходимо передать String.Empty.
+        ///
+        /// Возврат:
+        ///     Возвращает URI пространства имен для prefix или null Если соответствующее пространство
+        ///     имен отсутствует. Возвращаемая строка является атомизированной. Дополнительные
+        ///     сведения о разъединенных строках см. в разделе System.Xml.XmlNameTable класса.
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string LookupNamespace([MarshalAs(UnmanagedType.LPWStr)] string prefix);
+        ///
+        /// Сводка:
+        ///     Находит префикс, объявленный для заданного URI пространства имен.
+        ///
+        /// Параметры:
+        ///   uri:
+        ///     Пространство имен, чтобы разрешить для получения префикса.
+        ///
+        /// Возврат:
+        ///     Соответствующий префикс. Если нет сопоставленного префикса, данный метод возвращает
+        ///     String.Empty. Если указано значение null, затем null возвращается.
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string LookupPrefix([MarshalAs(UnmanagedType.LPWStr)] string uri);
+    }
+    public class TXmlNamespaceManager : IXmlNamespaceManager
+    {
+        public readonly XmlNamespaceManager m;
+        public TXmlNamespaceManager(XmlNameTable nameTable)=> m = new XmlNamespaceManager(nameTable);
+        string IXmlNamespaceManager.DefaultNamespace() => m.DefaultNamespace;
+        bool IXmlNamespaceManager.HasNamespace(string prefix) => m.HasNamespace(prefix);
+        string IXmlNamespaceManager.LookupNamespace(string prefix) => m.LookupNamespace(prefix);
+        string IXmlNamespaceManager.LookupPrefix(string uri) => m.LookupPrefix(uri);
+    }
+
+    [ComImport, Guid("0B02EBF5-71EA-44BA-92A3-5373E05B06D5"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IComXmlSchemaInfo
+    {
+        //
+        // Сводка:
+        //     Возвращает или задает System.Xml.Schema.XmlSchemaValidity проверяется значение
+        //     этого XML-узла.
+        //
+        // Возврат:
+        //     Значение System.Xml.Schema.XmlSchemaValidity.
+        [return: MarshalAs(UnmanagedType.U4)]
+        XmlSchemaValidity Validity();
+        //
+        // Сводка:
+        //     Возвращает или задает значение, указывающее, если проверенный узел XML был установлен
+        //     в результате значения по умолчанию, применяемого в ходе проверки схемы языка
+        //     определения схем XML (XSD).
+        //
+        // Возврат:
+        //     Значение bool.
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool IsDefault();
+        //
+        // Сводка:
+        //     Возвращает или задает значение, указывающее, если проверенный узел XML значение
+        //     nil.
+        //
+        // Возврат:
+        //     Значение bool.
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool IsNil();
+        //
+        // Сводка:
+        //     Возвращает или задает динамический тип схемы для этого проверенного XML-узла.
+        //
+        // Возврат:
+        //     Объект System.Xml.Schema.XmlSchemaSimpleType.
+        IXmlSchemaSimpleType MemberType();
+        //
+        // Сводка:
+        //     Возвращает или задает статический тип схемы языка определения схем XML (XSD)
+        //     проверенный узел XML.
+        //
+        // Возврат:
+        //     Объект System.Xml.Schema.XmlSchemaType.
+        IXmlSchemaType SchemaType();
+        //
+        // Сводка:
+        //     Возвращает или задает скомпилированного System.Xml.Schema.XmlSchemaElement объект,
+        //     соответствующий этому проверенный узел XML.
+        //
+        // Возврат:
+        //     Объект System.Xml.Schema.XmlSchemaElement.
+        IXmlSchemaElement SchemaElement();
+        //
+        // Сводка:
+        //     Возвращает или задает скомпилированного System.Xml.Schema.XmlSchemaAttribute
+        //     объект, соответствующий этому проверенный узел XML.
+        //
+        // Возврат:
+        //     Объект System.Xml.Schema.XmlSchemaAttribute.
+        IXmlSchemaAttribute SchemaAttribute();
+        //
+        // Сводка:
+        //     Возвращает или задает System.Xml.Schema.XmlSchemaContentType объекта, который
+        //     соответствует типу содержимого это проверенный узел XML.
+        //
+        // Возврат:
+        //     Объект System.Xml.Schema.XmlSchemaContentType.
+        [return: MarshalAs(UnmanagedType.U4)]
+        XmlSchemaContentType ContentType();
+    }
+    public class TXmlSchemaInfo : IComXmlSchemaInfo
+    {
+        public readonly XmlSchemaInfo x;
+        public readonly IXmlSchemaInfo ix;
+        public TXmlSchemaInfo()
+        {
+            x = new XmlSchemaInfo();
+            ix = x;
+        }
+        public TXmlSchemaInfo(IXmlSchemaInfo ix) => this.ix = ix;
+        XmlSchemaValidity IComXmlSchemaInfo.Validity() => ix.Validity;
+        bool IComXmlSchemaInfo.IsDefault() => ix.IsDefault;
+        bool IComXmlSchemaInfo.IsNil() => ix.IsNil;
+        IXmlSchemaSimpleType IComXmlSchemaInfo.MemberType() => (ix.MemberType != null) ? new TXmlSchemaSimpleType(ix.MemberType) : null; 
+        IXmlSchemaType IComXmlSchemaInfo.SchemaType() => (ix.SchemaType != null) ? TXmlSchemaType.GetXmlSchemaType(ix.SchemaType): null;
+        IXmlSchemaElement IComXmlSchemaInfo.SchemaElement() => (ix.SchemaElement != null) ? new TXmlSchemaElement(ix.SchemaElement) : null;
+        IXmlSchemaAttribute IComXmlSchemaInfo.SchemaAttribute() => (ix.SchemaAttribute != null) ? new TXmlSchemaAttribute(ix.SchemaAttribute) : null;
+        XmlSchemaContentType IComXmlSchemaInfo.ContentType() => x.ContentType;
+    }
+
+    [ComImport, Guid("C565ABD6-CE6F-48D2-B796-505936CEAD9C"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IXmlSchemaValidator
+    {
+        ///
+        /// Сводка:
+        ///     System.Xml.Schema.ValidationEventHandler Получает предупреждений проверки схемы
+        ///     и ошибки, возникшие при проверке схемы.
+        void AddValidationEventHandler(IXMLValidatorCallBack v);
+        ///
+        /// Сводка:
+        ///     Завершает проверку и проверяет ограничения идентификации для всего документа
+        ///     XML.
+        ///
+        /// Исключения:
+        ///   T:System.Xml.Schema.XmlSchemaValidationException:
+        ///     Ошибка ограничения идентификации найден в XML-документе.
+        void EndValidation();
+        ///
+        /// Сводка:
+        ///     Возвращает ожидаемые атрибуты для контекста текущего элемента.
+        ///
+        /// Возврат:
+        ///     Массив System.Xml.Schema.XmlSchemaAttribute объектов или пустой массив, если
+        ///     ожидаемые атрибуты отсутствуют.
+        void GetExpectedAttributes([MarshalAs(UnmanagedType.LPArray)] out XmlSchemaAttribute[] Attributes, out int Count);
+        ///
+        /// Сводка:
+        ///     Возвращает ожидаемые примитивы в контексте текущего элемента.
+        ///
+        /// Возврат:
+        ///     Массив System.Xml.Schema.XmlSchemaParticle объектов или пустой массив, если отсутствуют
+        ///     указанные примитивы.
+        void GetExpectedParticles([MarshalAs(UnmanagedType.LPArray)] out XmlSchemaParticle[] Particles, out int Count);
+        ///
+        /// Сводка:
+        ///     Проверяет ограничения идентификации в атрибуты по умолчанию и заполняет System.Collections.ArrayList
+        ///     задается с помощью System.Xml.Schema.XmlSchemaAttribute объектов для любых атрибутов
+        ///     со значениями по умолчанию, которые не были проверены ранее с помощью Overload:System.Xml.Schema.XmlSchemaValidator.ValidateAttribute
+        ///     метод в контексте элемента.
+        ///
+        /// Параметры:
+        ///   defaultAttributes:
+        ///     System.Collections.ArrayList Для заполнения System.Xml.Schema.XmlSchemaAttribute
+        ///     объектов для всех атрибутов, которые не были обнаружены во время проверки в контексте
+        ///     элемента.
+        void GetUnspecifiedDefaultAttributes([MarshalAs(UnmanagedType.LPArray)] out object[] defaultAttributes, out int Count);
+        ///
+        /// Сводка:
+        ///     Инициализирует состояние System.Xml.Schema.XmlSchemaValidator объекта.
+        ///
+        /// Исключения:
+        ///   T:System.InvalidOperationException:
+        ///     Вызов Overload:System.Xml.Schema.XmlSchemaValidator.Initialize метод допустим
+        ///     сразу после создания System.Xml.Schema.XmlSchemaValidator объекта или после вызова
+        ///     System.Xml.Schema.XmlSchemaValidator.EndValidation только.
+        void Initialize();
+        ///
+        /// Сводка:
+        ///     Инициализирует состояние System.Xml.Schema.XmlSchemaValidator с помощью System.Xml.Schema.XmlSchemaObject
+        ///     для частичной проверки.
+        ///
+        /// Параметры:
+        ///   partialValidationType:
+        ///     System.Xml.Schema.XmlSchemaElement, System.Xml.Schema.XmlSchemaAttribute, Или
+        ///     System.Xml.Schema.XmlSchemaType объект, используемый для инициализации контекста
+        ///     проверки объекта System.Xml.Schema.XmlSchemaValidator объекта для частичной проверки.
+        ///
+        /// Исключения:
+        ///   T:System.InvalidOperationException:
+        ///     Вызов Overload:System.Xml.Schema.XmlSchemaValidator.Initialize метод допустим
+        ///     сразу после создания System.Xml.Schema.XmlSchemaValidator объекта или после вызова
+        ///     System.Xml.Schema.XmlSchemaValidator.EndValidation только.
+        ///
+        ///   T:System.ArgumentException:
+        ///     System.Xml.Schema.XmlSchemaObject Параметр не System.Xml.Schema.XmlSchemaElement,
+        ///     System.Xml.Schema.XmlSchemaAttribute, или System.Xml.Schema.XmlSchemaType объекта.
+        ///
+        ///   T:System.ArgumentNullException:
+        ///     System.Xml.Schema.XmlSchemaObject Параметр не может быть null.
+        void Initialize(IXmlSchemaObject partialValidationType);
+        ///
+        /// Сводка:
+        ///     Пропускает проверку содержимого текущего элемента и подготавливает объект System.Xml.Schema.XmlSchemaValidator
+        ///     для проверки содержимого в контексте родительского элемента.
+        ///
+        /// Параметры:
+        ///   schemaInfo:
+        ///     System.Xml.Schema.XmlSchemaInfo Объект свойств которого задаются при пропуске
+        ///     проверки содержимого текущего элемента. Этот параметр может иметь значение null.
+        ///
+        /// Исключения:
+        ///   T:System.InvalidOperationException:
+        ///     System.Xml.Schema.XmlSchemaValidator.SkipToEndElement(System.Xml.Schema.XmlSchemaInfo)
+        ///     Не был вызван метод в правильной последовательности. Например, вызов System.Xml.Schema.XmlSchemaValidator.SkipToEndElement(System.Xml.Schema.XmlSchemaInfo)
+        ///     после вызова метода System.Xml.Schema.XmlSchemaValidator.SkipToEndElement(System.Xml.Schema.XmlSchemaInfo).
+        void SkipToEndElement(out IComXmlSchemaInfo schemaInfo);
+        ///
+        /// Сводка:
+        ///     Проверяет имя атрибута, URI пространства имен и значение в контексте текущего
+        ///     элемента.
+        ///
+        /// Параметры:
+        ///   localName:
+        ///     Проверяемое локальное имя атрибута.
+        ///
+        ///   namespaceUri:
+        ///     Проверяемый URI пространства имен атрибута.
+        ///
+        ///   attributeValue:
+        ///     Проверяемое значение атрибута.
+        ///
+        ///   schemaInfo:
+        ///     System.Xml.Schema.XmlSchemaInfo Объект свойств которого задаются при успешной
+        ///     проверке атрибута. Этот параметр может иметь значение null.
+        ///
+        /// Возврат:
+        ///     Проверенное значение атрибута.
+        ///
+        /// Исключения:
+        ///   T:System.Xml.Schema.XmlSchemaValidationException:
+        ///     Атрибут не является допустимым в контексте текущего элемента.
+        ///
+        ///   T:System.InvalidOperationException:
+        ///     Overload:System.Xml.Schema.XmlSchemaValidator.ValidateAttribute Не был вызван
+        ///     метод в правильной последовательности. Например, вызов Overload:System.Xml.Schema.XmlSchemaValidator.ValidateAttribute
+        ///     после вызова метода System.Xml.Schema.XmlSchemaValidator.ValidateEndOfAttributes(System.Xml.Schema.XmlSchemaInfo).
+        ///
+        ///   T:System.ArgumentNullException:
+        ///     Одно или несколько из указанных параметров null.
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string ValidateAttribute([MarshalAs(UnmanagedType.LPWStr)] string localName,
+                                 [MarshalAs(UnmanagedType.LPWStr)] string namespaceUri,
+                                 [MarshalAs(UnmanagedType.LPWStr)] string attributeValue, out IComXmlSchemaInfo schemaInfo);
+        ///
+        /// Сводка:
+        ///     Проверяет элемент в текущем контексте.
+        ///
+        /// Параметры:
+        ///   localName:
+        ///     Проверяемое локальное имя элемента.
+        ///
+        ///   namespaceUri:
+        ///     Проверяемый URI пространства имен элемента.
+        ///
+        ///   schemaInfo:
+        ///     System.Xml.Schema.XmlSchemaInfo Объект свойств которого задаются при успешной
+        ///     проверке имени элемента. Этот параметр может иметь значение null.
+        ///
+        /// Исключения:
+        ///   T:System.Xml.Schema.XmlSchemaValidationException:
+        ///     Недопустимое имя элемента в текущем контексте.
+        ///
+        ///   T:System.InvalidOperationException:
+        ///     Overload:System.Xml.Schema.XmlSchemaValidator.ValidateElement Не был вызван метод
+        ///     в правильной последовательности. Например Overload:System.Xml.Schema.XmlSchemaValidator.ValidateElement
+        ///     метод вызывается после вызова метода Overload:System.Xml.Schema.XmlSchemaValidator.ValidateAttribute.
+        void ValidateElement([MarshalAs(UnmanagedType.LPWStr)] string localName,
+                             [MarshalAs(UnmanagedType.LPWStr)] string namespaceUri, out IComXmlSchemaInfo schemaInfo);
+        ///
+        /// Сводка:
+        ///     Проверяет элемент в текущем контексте с xsi:Type, xsi:Nil, xsi:SchemaLocation,
+        ///     и xsi:NoNamespaceSchemaLocation указанного значения атрибута.
+        ///
+        /// Параметры:
+        ///   localName:
+        ///     Проверяемое локальное имя элемента.
+        ///
+        ///   namespaceUri:
+        ///     Проверяемый URI пространства имен элемента.
+        ///
+        ///   schemaInfo:
+        ///     System.Xml.Schema.XmlSchemaInfo Объект свойств которого задаются при успешной
+        ///     проверке имени элемента. Этот параметр может иметь значение null.
+        ///
+        ///   xsiType:
+        ///     xsi:Type Значение элемента атрибута. Этот параметр может иметь значение null.
+        ///
+        ///   xsiNil:
+        ///     xsi:Nil Значение элемента атрибута. Этот параметр может иметь значение null.
+        ///
+        ///   xsiSchemaLocation:
+        ///     xsi:SchemaLocation Значение элемента атрибута. Этот параметр может иметь значение
+        ///     null.
+        ///
+        ///   xsiNoNamespaceSchemaLocation:
+        ///     xsi:NoNamespaceSchemaLocation Значение элемента атрибута. Этот параметр может
+        ///     иметь значение null.
+        ///
+        /// Исключения:
+        ///   T:System.Xml.Schema.XmlSchemaValidationException:
+        ///     Недопустимое имя элемента в текущем контексте.
+        ///
+        ///   T:System.InvalidOperationException:
+        ///     Overload:System.Xml.Schema.XmlSchemaValidator.ValidateElement Не был вызван метод
+        ///     в правильной последовательности. Например Overload:System.Xml.Schema.XmlSchemaValidator.ValidateElement
+        ///     метод вызывается после вызова метода Overload:System.Xml.Schema.XmlSchemaValidator.ValidateAttribute.
+        void ValidateElement([MarshalAs(UnmanagedType.LPWStr)] string localName,
+                             [MarshalAs(UnmanagedType.LPWStr)] string namespaceUri, 
+                             out IComXmlSchemaInfo schemaInfo,
+                             [MarshalAs(UnmanagedType.LPWStr)] string xsiType,
+                             [MarshalAs(UnmanagedType.LPWStr)] string xsiNil,
+                             [MarshalAs(UnmanagedType.LPWStr)] string xsiSchemaLocation,
+                             [MarshalAs(UnmanagedType.LPWStr)] string xsiNoNamespaceSchemaLocation);
+        ///
+        /// Сводка:
+        ///     Проверяет, является ли текстовое содержимое указанного элемента допустимым для
+        ///     его типа данных.
+        ///
+        /// Параметры:
+        ///   schemaInfo:
+        ///     System.Xml.Schema.XmlSchemaInfo Объект свойств которого задаются при успешной
+        ///     проверке текстового содержимого элемента. Этот параметр может иметь значение
+        ///     null.
+        ///
+        ///   typedValue:
+        ///     Типизированное текстовое содержимое элемента.
+        ///
+        /// Возврат:
+        ///     Простое типизированное содержимое элемента после анализа.
+        ///
+        /// Исключения:
+        ///   T:System.Xml.Schema.XmlSchemaValidationException:
+        ///     Текстовое содержимое элемента является недопустимым.
+        ///
+        ///   T:System.InvalidOperationException:
+        ///     Overload:System.Xml.Schema.XmlSchemaValidator.ValidateEndElement Не был вызван
+        ///     метод в правильном порядке (например, если Overload:System.Xml.Schema.XmlSchemaValidator.ValidateEndElement
+        ///     метод вызывается после вызова метода System.Xml.Schema.XmlSchemaValidator.SkipToEndElement(System.Xml.Schema.XmlSchemaInfo)),
+        ///     вызовы Overload:System.Xml.Schema.XmlSchemaValidator.ValidateText ранее были
+        ///     внесены метод или элемент имеет сложное содержимое.
+        ///
+        ///   T:System.ArgumentNullException:
+        ///     Параметр типизированного текстового содержимого не может быть null.
+        [return: MarshalAs(UnmanagedType.Interface)]
+        object ValidateEndElement(out IComXmlSchemaInfo schemaInfo, [MarshalAs(UnmanagedType.Interface)] object typedValue);
+        ///
+        /// Сводка:
+        ///     Для элементов с простым содержимым проверяет, является ли текстовое содержимое
+        ///     элемента допустимым для его типа данных. Для элементов со сложным содержимым
+        ///     проверяет, является ли содержимое текущего элемента полным.
+        ///
+        /// Параметры:
+        ///   schemaInfo:
+        ///     System.Xml.Schema.XmlSchemaInfo Свойств которого задаются при успешной проверке
+        ///     элемента объекта. Этот параметр может иметь значение null.
+        ///
+        /// Возврат:
+        ///     Проанализированное типизированное текстовое значение элемента, если содержимое
+        ///     элемента является простым.
+        ///
+        /// Исключения:
+        ///   T:System.Xml.Schema.XmlSchemaValidationException:
+        ///     Недопустимое содержимое элемента.
+        ///
+        ///   T:System.InvalidOperationException:
+        ///     Overload:System.Xml.Schema.XmlSchemaValidator.ValidateEndElement Не был вызван
+        ///     метод в правильной последовательности. Например если Overload:System.Xml.Schema.XmlSchemaValidator.ValidateEndElement
+        ///     метод вызывается после вызова метода System.Xml.Schema.XmlSchemaValidator.SkipToEndElement(System.Xml.Schema.XmlSchemaInfo).
+        [return: MarshalAs(UnmanagedType.Interface)] 
+        object ValidateEndElement(out IComXmlSchemaInfo schemaInfo);
+        ///
+        /// Сводка:
+        ///     Проверяет наличие всех необходимых атрибутов в контексте элемента и подготавливает
+        ///     объект System.Xml.Schema.XmlSchemaValidator для проверки содержимого дочернего
+        ///     элемента.
+        ///
+        /// Параметры:
+        ///   schemaInfo:
+        ///     System.Xml.Schema.XmlSchemaInfo Свойств которого задаются при успешной проверке,
+        ///     что имеются все необходимые атрибуты контекста элемента на объект. Этот параметр
+        ///     может иметь значение null.
+        ///
+        /// Исключения:
+        ///   T:System.Xml.Schema.XmlSchemaValidationException:
+        ///     Не удалось найти один или несколько необходимых атрибутов в контексте текущего
+        ///     элемента.
+        ///
+        ///   T:System.InvalidOperationException:
+        ///     System.Xml.Schema.XmlSchemaValidator.ValidateEndOfAttributes(System.Xml.Schema.XmlSchemaInfo)
+        ///     Не был вызван метод в правильной последовательности. Например, вызов System.Xml.Schema.XmlSchemaValidator.ValidateEndOfAttributes(System.Xml.Schema.XmlSchemaInfo)
+        ///     после вызова метода System.Xml.Schema.XmlSchemaValidator.SkipToEndElement(System.Xml.Schema.XmlSchemaInfo).
+        ///
+        ///   T:System.ArgumentNullException:
+        ///     Одно или несколько из указанных параметров null.
+        void ValidateEndOfAttributes(out IComXmlSchemaInfo schemaInfo);
+        ///
+        /// Сводка:
+        ///     Проверяет, является ли текст string допустимым для контекста текущего элемента
+        ///     и собирает текст для проверки, если текущий элемент имеет простое содержимое.
+        ///
+        /// Параметры:
+        ///   elementValue:
+        ///     Текстовый string нужно проверить в контексте текущего элемента.
+        ///
+        /// Исключения:
+        ///   T:System.Xml.Schema.XmlSchemaValidationException:
+        ///     Текст string указанного не разрешены в контексте текущего элемента.
+        ///
+        ///   T:System.InvalidOperationException:
+        ///     Overload:System.Xml.Schema.XmlSchemaValidator.ValidateText Не был вызван метод
+        ///     в правильной последовательности. Например Overload:System.Xml.Schema.XmlSchemaValidator.ValidateText
+        ///     метод вызывается после вызова метода Overload:System.Xml.Schema.XmlSchemaValidator.ValidateAttribute.
+        ///
+        ///   T:System.ArgumentNullException:
+        ///     Текст string параметр не может быть null.
+        void ValidateText([MarshalAs(UnmanagedType.LPWStr)] string elementValue);
+        ///
+        /// Сводка:
+        ///     Проверяет, является ли пустое пространство в string допустимым для контекста
+        ///     текущего элемента и собирает пустое пространство для проверки, если текущий элемент
+        ///     имеет простое содержимое.
+        ///
+        /// Параметры:
+        ///   elementValue:
+        ///     Пустое пространство string нужно проверить в контексте текущего элемента.
+        ///
+        /// Исключения:
+        ///   T:System.Xml.Schema.XmlSchemaValidationException:
+        ///     Пробел не допускается в контексте текущего элемента.
+        ///
+        ///   T:System.InvalidOperationException:
+        ///     Overload:System.Xml.Schema.XmlSchemaValidator.ValidateWhitespace Не был вызван
+        ///     метод в правильной последовательности. Например если Overload:System.Xml.Schema.XmlSchemaValidator.ValidateWhitespace
+        ///     метод вызывается после вызова метода Overload:System.Xml.Schema.XmlSchemaValidator.ValidateAttribute.
+        void ValidateWhitespace([MarshalAs(UnmanagedType.LPWStr)] string elementValue);
+    }
+    public class TXmlSchemaValidator : IXmlSchemaValidator
+    {
+        public readonly XmlSchemaValidator v;
+        private IXMLValidatorCallBack cbk;
+        private readonly TXmlSchemaInfo inf;
+        public TXmlSchemaValidator(XmlNameTable nameTable, XmlSchemaSet schemas, IXmlNamespaceResolver namespaceResolver, XmlSchemaValidationFlags validationFlags)
+        {
+            v = new XmlSchemaValidator(nameTable, schemas, namespaceResolver, validationFlags);
+            v.ValidationEventHandler += ValidationCallback;
+            inf = new TXmlSchemaInfo();
+        }
+        void ValidationCallback(object sender, ValidationEventArgs args) => cbk?.ValidationCallback(args.Severity, args.Message);
+        void IXmlSchemaValidator.AddValidationEventHandler(IXMLValidatorCallBack ev) => cbk = ev;
+        void IXmlSchemaValidator.EndValidation() => v.EndValidation();
+        void IXmlSchemaValidator.GetExpectedAttributes(out XmlSchemaAttribute[] Attributes, out int Count)
+        {
+            Attributes = v.GetExpectedAttributes();
+            Count = Attributes.Length;
+        }
+        void IXmlSchemaValidator.GetExpectedParticles(out XmlSchemaParticle[] Particles, out int Count)
+        {
+            Particles = v.GetExpectedParticles();
+            Count = Particles.Length;
+        }
+        void IXmlSchemaValidator.GetUnspecifiedDefaultAttributes(out object[] defaultAttributes, out int Count)
+        {
+            ArrayList a = new ArrayList();
+            v.GetUnspecifiedDefaultAttributes(a);
+            defaultAttributes = a.ToArray();
+            Count = defaultAttributes.Length;
+        }
+        void IXmlSchemaValidator.Initialize() => v.Initialize();
+        void IXmlSchemaValidator.Initialize(IXmlSchemaObject partialValidationType) => v.Initialize((XmlSchemaObject) partialValidationType.XmlObject());
+        void IXmlSchemaValidator.SkipToEndElement(out IComXmlSchemaInfo schemaInfo)
+        {
+           v.SkipToEndElement(inf.x);
+            schemaInfo = inf;
+        }
+        string IXmlSchemaValidator.ValidateAttribute(string localName, string namespaceUri, string attributeValue, out IComXmlSchemaInfo schemaInfo)
+        {
+            schemaInfo = inf;
+            return v.ValidateAttribute(localName, namespaceUri, attributeValue, inf.x).ToString();
+        }
+        void IXmlSchemaValidator.ValidateElement(string localName, string namespaceUri, out IComXmlSchemaInfo schemaInfo)
+        {
+            schemaInfo = inf;
+            v.ValidateElement(localName, namespaceUri, inf.x);
+        }
+        void IXmlSchemaValidator.ValidateElement(string localName, string namespaceUri, out IComXmlSchemaInfo schemaInfo, string xsiType, string xsiNil, string xsiSchemaLocation, string xsiNoNamespaceSchemaLocation)
+        {
+            schemaInfo = inf;
+            v.ValidateElement(localName, namespaceUri, inf.x, xsiType, xsiNil, xsiSchemaLocation, xsiNoNamespaceSchemaLocation);
+        }
+        object IXmlSchemaValidator.ValidateEndElement(out IComXmlSchemaInfo schemaInfo, object typedValue)
+        {
+            schemaInfo = inf;
+            return v.ValidateEndElement(inf.x, typedValue);
+        }
+        object IXmlSchemaValidator.ValidateEndElement(out IComXmlSchemaInfo schemaInfo)
+        {
+            schemaInfo = inf;
+            return v.ValidateEndElement(inf.x);
+        }
+        void IXmlSchemaValidator.ValidateEndOfAttributes(out IComXmlSchemaInfo schemaInfo)
+        {
+            schemaInfo = inf;
+            v.ValidateEndOfAttributes(inf.x);
+        }
+        void IXmlSchemaValidator.ValidateText(string elementValue) => v.ValidateText(elementValue);
+        void IXmlSchemaValidator.ValidateWhitespace(string elementValue) => v.ValidateWhitespace(elementValue);
+    }
+
+    [ComImport, Guid("51B807B6-9806-4BAD-9179-1CCC82E6AEC0"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IXmlReader
+    {
+        //
+        // Сводка:
+        //     Возвращает значение, показывающее, имеются ли атрибуты у текущего узла.
+        //
+        // Возврат:
+        //     Значение true, если текущий узел содержит атрибуты; в противном случае — значение
+        //     false.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool HasAttributes();
+        //
+        // Сводка:
+        //     При переопределении в производном классе, возвращает текущую xml:lang область.
+        //
+        // Возврат:
+        //     Текущая область действия xml:lang.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string XmlLang();
+        //
+        // Сводка:
+        //     При переопределении в производном классе, возвращает текущую xml:space область.
+        //
+        // Возврат:
+        //     Одно из значений System.Xml.XmlSpace. Если область действия xml:space отсутствует,
+        //     данное свойство принимает значение XmlSpace.None.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U4)]
+        XmlSpace XmlSpace();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает значение, определяющее,
+        //     является ли текущий узел атрибутом, созданным из значения по умолчанию, определенного
+        //     в DTD или схеме.
+        //
+        // Возврат:
+        //     Значение true, если текущий узел является атрибутом, значение которого было создано
+        //     из значения по умолчанию, определенного в DTD или схеме; значение false, если
+        //     значение атрибута было задано явно.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool IsDefault();
+        //
+        // Сводка:
+        //     При переопределении в производном классе получает значение, указывающее, является
+        //     ли текущий узел пустым элементом (например, <MyElement/>).
+        //
+        // Возврат:
+        //     Значение true, если текущий узел является элементом (свойство System.Xml.XmlReader.NodeType
+        //     имеет значение XmlNodeType.Element), который заканчивается на />; в противном
+        //     случае — false.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool IsEmptyElement();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает базовый URI текущего узла.
+        //
+        // Возврат:
+        //     Базовый URI текущего узла.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string BaseURI();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает текстовое значение текущего
+        //     узла.
+        //
+        // Возврат:
+        //     Возвращаемое значение зависит от значения свойства System.Xml.XmlReader.NodeType
+        //     узла. В следующей таблице представлен список возвращаемых типов узлов со значениями.
+        //     Все прочие типы узлов возвращают значение String.Empty. Тип узла Значение Attribute
+        //     Значение атрибута. CDATA Содержимое раздела CDATA. Comment Содержимое комментария.
+        //     DocumentType Внутреннее подмножество. ProcessingInstruction Все содержимое, за
+        //     исключением цели. SignificantWhitespace Пробелы между разметкой в модели смешанного
+        //     содержимого. Text Содержимое текстового узла. Whitespace Пробелы между разметкой.
+        //     XmlDeclaration Содержимое декларации.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string Value();
+        //
+        // Сводка:
+        //     При переопределении в производном классе получает значение, указывающее, является
+        //     ли текущий узел может иметь System.Xml.XmlReader.Value.
+        //
+        // Возврат:
+        //     Значение true, если узел, на котором расположено средство чтения, может иметь
+        //     значение Value; в противном случае — false. Если false, узел имеет значение String.Empty.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool HasValue();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает префикс пространства имен,
+        //     связанный с текущим узлом.
+        //
+        // Возврат:
+        //     Префикс пространства имен, связанный с текущим узлом.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string Prefix();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает тип текущего узла.
+        //
+        // Возврат:
+        //     Одно из значений перечисления, задающее тип текущего узла.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U4)]
+        XmlNodeType NodeType();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает полное имя текущего узла.
+        //
+        // Возврат:
+        //     Полное имя текущего узла. Например, Name имеет значение bk:book для элемента
+        //     <bk:book>. Возвращаемое имя зависит от значения свойства System.Xml.XmlReader.NodeType
+        //     узла. Значения возвращаются для представленных ниже типов узлов. Для других типов
+        //     узлов возвращается пустая строка. Тип узла Имя Attribute Имя атрибута. DocumentType
+        //     Имя типа документа. Element Имя тега. EntityReference Имя сущности, на которую
+        //     существует ссылка. ProcessingInstruction Цель инструкции по обработке. XmlDeclaration
+        //     Символьная строка xml.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string Name();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает глубину текущего узла в
+        //     XML-документе.
+        //
+        // Возврат:
+        //     Глубина текущего узла в XML-документе.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        int Depth();
+        //
+        // Сводка:
+        //     Возвращает сведения схемы, которые были назначены текущему узлу в результате
+        //     проверки схемы.
+        //
+        // Возврат:
+        //     System.Xml.Schema.IXmlSchemaInfo Объект, содержащий сведения о схеме для текущего
+        //     узла. Сведения о схеме можно задать на элементов, атрибутов или текстовых узлов
+        //     с пустым System.Xml.XmlReader.ValueType (типизированные значения). Если текущий
+        //     узел не является одним из приведенных выше типов узлов или XmlReader экземпляра
+        //     не сообщает сведения о схеме, это свойство возвращает null. Если это свойство
+        //     вызывается из System.Xml.XmlTextReader или System.Xml.XmlValidatingReader объекта,
+        //     это свойство всегда возвращает null. Эти XmlReader реализации не раскрывают сведений
+        //     схемы посредством SchemaInfo свойство. Если требуется получить информационный
+        //     набор после проверки схемы (PSVI — post-schema-validation information set) для
+        //     элемента, выполните позиционирование объекта чтения на конечный тег элемента
+        //     вместо начального. PSVI доступны SchemaInfo объекта чтения. Проверяющий модуль
+        //     чтения, созданного при помощи Overload:System.Xml.XmlReader.Create с System.Xml.XmlReaderSettings.ValidationType
+        //     свойству System.Xml.ValidationType.Schema имеет полные сведения PSVI для элемента
+        //     только в том случае, если средство чтения расположено на конечный тег элемента.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        IComXmlSchemaInfo SchemaInfo();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает количество атрибутов текущего
+        //     узла.
+        //
+        // Возврат:
+        //     Количество атрибутов текущего узла.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        int AttributeCount();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает локальное имя текущего
+        //     узла.
+        //
+        // Возврат:
+        //     Имя текущего узла с удаленным префиксом. Например, LocalName имеет значение book
+        //     для элемента <bk:book>. Для безымянных типов узлов (например, Text, Comment и
+        //     т. д.) данное свойство возвращает String.Empty.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string LocalName();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает URI пространства имен (определенное
+        //     в спецификации W3C Namespace) узла, на котором расположено средство чтения.
+        //
+        // Возврат:
+        //     URI пространства имен текущего узла; в противном случае — пустая строка.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string NamespaceURI();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает состояние средства чтения.
+        //
+        // Возврат:
+        //     Одно из значений перечисления, определяющее состояние средства чтения.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U4)]
+        ReadState ReadState();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает значение, показывающее,
+        //     позиционировано ли средство чтения в конец потока.
+        //
+        // Возврат:
+        //     Значение true, если средство чтения установлено в конец потока; в противном случае
+        //     — false.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool EOF();
+
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, возвращает значение атрибута по указанному
+        //     индексу.
+        //
+        // Параметры:
+        //   i:
+        //     Индекс атрибута. Индексация начинается с нуля. (Индекс первого атрибута равен
+        //     нулю.)
+        //
+        // Возврат:
+        //     Значение указанного атрибута. Этот метод не изменяет позицию средства чтения.
+        //
+        // Исключения:
+        //   T:System.ArgumentOutOfRangeException:
+        //     i выходит за пределы диапазона. Оно должно быть неотрицательным и меньшим, чем
+        //     размер коллекции атрибутов.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string GetAttribute(int i);
+        //
+        // Сводка:
+        //     Вызовы System.Xml.XmlReader.MoveToContent и проверяет, является ли текущий узел
+        //     содержимого открывающим тегом или пустым тегом элемента.
+        //
+        // Возврат:
+        //     true Если System.Xml.XmlReader.MoveToContent находит открывающий тег или пустой
+        //     тег элемента; false Если узел типом, отличным от XmlNodeType.Element найден.
+        //
+        // Исключения:
+        //   T:System.Xml.XmlException:
+        //     Неверный XML встречается во входном потоке.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool IsStartElement();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, разрешает префикс пространства имен
+        //     в области видимости текущего элемента.
+        //
+        // Параметры:
+        //   prefix:
+        //     Префикс, для которого требуется разрешить URI пространства имен. Чтобы сопоставить
+        //     пространство имен по умолчанию, необходимо передать пустую строку.
+        //
+        // Возврат:
+        //     URI пространства имен, которое отображает префикс, или значение null, если соответствующий
+        //     префикс не найден.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string LookupNamespace([MarshalAs(UnmanagedType.LPWStr)] string prefix);
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, переходит к атрибуту с указанным индексом.
+        //
+        // Параметры:
+        //   i:
+        //     Индекс атрибута.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        //
+        //   T:System.ArgumentOutOfRangeException:
+        //     Параметр имеет отрицательное значение.
+        void MoveToAttribute(int i);
+        //
+        // Сводка:
+        //     Проверяет, является ли текущий узел содержимого (текст пустое пространство, CDATA,
+        //     Element, EndElement, EntityReference, или EndEntity) узла. Если узел не является
+        //     узлом содержимого, средство чтения пропускает этот узел и переходит к следующему
+        //     узлу содержимого или в конец файла. Пропускаются узлы следующих типов: ProcessingInstruction,
+        //     DocumentType, Comment, Whitespace и SignificantWhitespace.
+        //
+        // Возврат:
+        //     System.Xml.XmlReader.NodeType Текущего узла, найденного с помощью метода или
+        //     XmlNodeType.None Если средство чтения достигло конца потока входных данных.
+        //
+        // Исключения:
+        //   T:System.Xml.XmlException:
+        //     Во входном потоке обнаружен неверный XML-код.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U4)]
+        XmlNodeType MoveToContent();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, переходит к элементу, содержащему
+        //     текущий узел атрибута.
+        //
+        // Возврат:
+        //     Значение true, если средство чтения находится на атрибуте (средство чтения перемещается
+        //     к элементу с этим атрибутом); в противном случае — false (позиция средства чтения
+        //     не изменяется).
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool MoveToElement();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, переходит к первому атрибуту.
+        //
+        // Возврат:
+        //     Значение true, если атрибут существует (средство чтения перемещается к первому
+        //     атрибуту); в противном случае — false (позиция средства чтения не изменяется).
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool MoveToFirstAttribute();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, переходит к следующему атрибуту.
+        //
+        // Возврат:
+        //     Значение true, если присутствует следующий атрибут; значение false, если другие
+        //     атрибуты отсутствуют.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool MoveToNextAttribute();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, считывает из потока следующий узел.
+        //
+        // Возврат:
+        //     true, если считывание узла прошло успешно. В противном случае — false.
+        //
+        // Исключения:
+        //   T:System.Xml.XmlException:
+        //     Произошла ошибка при синтаксическом анализе XML.
+        //
+        //   T:System.InvalidOperationException:
+        //     Метод System.Xml.XmlReader вызван перед завершением предыдущей асинхронной операции.
+        //     В этом случае возникает исключение System.InvalidOperationException с сообщением
+        //     "Асинхронная операция уже выполняется".
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool Read();
+        //
+        // Сводка:
+        //     При переопределении в производном классе разбирает значение атрибута в один или
+        //     несколько Text, EntityReference, или EndEntity узлов.
+        //
+        // Возврат:
+        //     Значение true, если присутствуют возвращаемые узлы. Значение false, если средство
+        //     чтения не расположено на узле атрибута при первом вызове или все значения атрибута
+        //     считаны. Пустой атрибут (например, misc="") возвращает значение true с отдельным
+        //     узлом, имеющим значение String.Empty.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool ReadAttributeValue();
+        //
+        // Сводка:
+        //     Считывает содержимое текста в текущей позиции как System.Object.
+        //
+        // Возврат:
+        //     Текстовое содержимое как самый подходящий объект CLR.
+        //
+        // Исключения:
+        //   T:System.InvalidCastException:
+        //     Попытка приведения типов не является допустимым.
+        //
+        //   T:System.FormatException:
+        //     Недопустимый формат строки.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.Interface)]
+        object ReadContentAsObject();
+        //
+        // Сводка:
+        //     Считывает содержимое текста в текущей позиции как System.String объект.
+        //
+        // Возврат:
+        //     Текстовое содержимое в виде System.String объекта.
+        //
+        // Исключения:
+        //   T:System.InvalidCastException:
+        //     Попытка приведения типов не является допустимым.
+        //
+        //   T:System.FormatException:
+        //     Недопустимый формат строки.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string ReadContentAsString();
+        //
+        // Сводка:
+        //     Считывает текущий элемент и возвращает содержимое в виде System.Object.
+        //
+        // Возврат:
+        //     Упакованный объект CLR наиболее подходящего типа. System.Xml.XmlReader.ValueType
+        //     Свойство определяет соответствующий тип среды CLR. Если содержимое типизировано
+        //     как тип списка, этот метод возвращает массив упакованных объектов соответствующего
+        //     типа.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Не находится на элементе.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        //
+        //   T:System.Xml.XmlException:
+        //     Текущий элемент содержит дочерние элементы. -или- Содержимое элемента нельзя
+        //     преобразовать в требуемый тип
+        //
+        //   T:System.ArgumentNullException:
+        //     Метод вызывается с null аргументы.
+        [return: MarshalAs(UnmanagedType.Interface)]
+        object ReadElementContentAsObject();
+        //
+        // Сводка:
+        //     Считывает текущий элемент и возвращает содержимое в виде System.String объекта.
+        //
+        // Возврат:
+        //     Содержимое элемента в виде System.String объекта.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Не находится на элементе.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        //
+        //   T:System.Xml.XmlException:
+        //     Текущий элемент содержит дочерние элементы. -или- Не удается преобразовать содержимое
+        //     элемента System.String объекта.
+        //
+        //   T:System.ArgumentNullException:
+        //     Метод вызывается с null аргументы.
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string ReadElementContentAsString();
+        //
+        // Сводка:
+        //     Проверяет, является ли текущий узел содержимого закрывающим тегом, и позиционирует
+        //     средство чтения на следующий узел.
+        //
+        // Исключения:
+        //   T:System.Xml.XmlException:
+        //     Текущий узел не является закрывающим тегом или если неверный XML встречается
+        //     во входном потоке.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        void ReadEndElement();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, считывает как строку все содержимое,
+        //     включая разметку.
+        //
+        // Возврат:
+        //     Все содержимое XML-кода в текущем узле, включая разметку. Если текущий узел не
+        //     имеет дочерних узлов, возвращается пустая строка. Если текущий узел не является
+        //     элементом или атрибутом, возвращается пустая строка.
+        //
+        // Исключения:
+        //   T:System.Xml.XmlException:
+        //     XML-код неверен или произошла ошибка при разборе XML.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string ReadInnerXml();
+        //
+        // Сводка:
+        //     Когда переопределено в производном классе, считывает содержимое, включая разметку,
+        //     представляющую этот узел и все его дочерние узлы.
+        //
+        // Возврат:
+        //     Если средство чтения позиционировано на узел элемента или атрибута, данный метод
+        //     возвращает все содержимое XML текущего узла и всех его дочерних узлов, включая
+        //     разметку; в противном случае возвращается пустая строка.
+        //
+        // Исключения:
+        //   T:System.Xml.XmlException:
+        //     XML-код неверен или произошла ошибка при разборе XML.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string ReadOuterXml();
+        //
+        // Сводка:
+        //     Проверяет, является ли текущий узел элементом и перемещает модуль чтения к следующему
+        //     узлу.
+        //
+        // Исключения:
+        //   T:System.Xml.XmlException:
+        //     Во входном потоке обнаружен неправильный XML.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        void ReadStartElement();
+        //
+        // Сводка:
+        //     Возвращает новый XmlReader экземпляр, который может использоваться для считывания
+        //     текущего узла и всех его потомков.
+        //
+        // Возврат:
+        //     Новый экземпляр средства чтения XML, равным System.Xml.ReadState.Initial. Вызов
+        //     System.Xml.XmlReader.Read метод помещает новый модуль чтения на узел, который
+        //     был текущим перед вызовом System.Xml.XmlReader.ReadSubtree метод.
+        //
+        // Исключения:
+        //   T:System.InvalidOperationException:
+        //     Средство чтения XML не находится на элементе при вызове этого метода.
+        //
+        //   T:System.InvalidOperationException:
+        //     System.Xml.XmlReader Метод был вызван до завершения предыдущей асинхронной операции.
+        //     В этом случае System.InvalidOperationException исключение с сообщением «асинхронная
+        //     операция уже выполняется.»
+        IXmlReader ReadSubtree();
+    }
+    public class TXmlReader : IXmlReader
+    {
+        private readonly XmlReader r;
+        public TXmlReader(XmlReader r) => this.r = r;
+        bool IXmlReader.HasAttributes() => r.HasAttributes;
+        string IXmlReader.XmlLang() => r.XmlLang;
+        XmlSpace IXmlReader.XmlSpace() => r.XmlSpace;
+        bool IXmlReader.IsDefault() => r.IsDefault;
+        bool IXmlReader.IsEmptyElement() => r.IsEmptyElement;
+        string IXmlReader.BaseURI() => r.BaseURI;
+        string IXmlReader.Value() => r.Value;
+        bool IXmlReader.HasValue() => r.HasValue;
+        string IXmlReader.Prefix() => r.Prefix;
+        XmlNodeType IXmlReader.NodeType() => r.NodeType;
+        string IXmlReader.Name() => r.Name;
+        int IXmlReader.Depth() => r.Depth;
+        IComXmlSchemaInfo IXmlReader.SchemaInfo() => new TXmlSchemaInfo(r.SchemaInfo);
+        int IXmlReader.AttributeCount() => r.AttributeCount;
+        string IXmlReader.LocalName() => r.LocalName;
+        string IXmlReader.NamespaceURI() => r.NamespaceURI;
+        ReadState IXmlReader.ReadState() => r.ReadState;
+        bool IXmlReader.EOF() => r.EOF;
+
+        string IXmlReader.GetAttribute(int i) => r.GetAttribute(i);
+        bool IXmlReader.IsStartElement() => r.IsStartElement();
+        string IXmlReader.LookupNamespace(string prefix) => r.LookupNamespace(prefix);
+        void IXmlReader.MoveToAttribute(int i) => r.MoveToAttribute(i);
+        XmlNodeType IXmlReader.MoveToContent() => r.MoveToContent();
+        bool IXmlReader.MoveToElement() => r.MoveToElement();
+        bool IXmlReader.MoveToFirstAttribute() => r.MoveToFirstAttribute();
+        bool IXmlReader.MoveToNextAttribute() => r.MoveToNextAttribute();
+        bool IXmlReader.Read() => r.Read();
+        bool IXmlReader.ReadAttributeValue() => r.ReadAttributeValue();
+        object IXmlReader.ReadContentAsObject() => r.ReadContentAsObject();
+        string IXmlReader.ReadContentAsString() => r.ReadContentAsString();
+        object IXmlReader.ReadElementContentAsObject() => r.ReadElementContentAsObject();
+        string IXmlReader.ReadElementContentAsString() => r.ReadElementContentAsString();
+        void IXmlReader.ReadEndElement() => r.ReadEndElement();
+        string IXmlReader.ReadInnerXml() => r.ReadInnerXml();
+        string IXmlReader.ReadOuterXml() => r.ReadOuterXml();
+        void IXmlReader.ReadStartElement() => r.ReadStartElement();
+        IXmlReader IXmlReader.ReadSubtree() => new TXmlReader(r.ReadSubtree());
+    }
+
+    [ComImport, Guid("CEAD7A91-2DAC-44E1-8425-F32E1A23DCE3"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IXmlSchemaSet
+    {
+        IXmlNamespaceManager Namespace();
+        //
+        // Сводка:
+        //     Получает все глобальные атрибуты в определении схемы XML схем языка XSD в System.Xml.Schema.XmlSchemaSet.
+        //
+        // Возврат:
+        //     Коллекция глобальных атрибутов.
+        IXmlSchemaObjectTable GlobalAttributes();
+        //
+        // Сводка:
+        //     Получает все глобальные элементы в определении схемы XML схем языка XSD в System.Xml.Schema.XmlSchemaSet.
+        //
+        // Возврат:
+        //     Коллекция глобальных элементов.         
+        IXmlSchemaObjectTable GlobalElements();
+        //
+        // Сводка:
+        //     Получает все глобальные простые и сложные типы в определении схемы XML схем языка
+        //     XSD в System.Xml.Schema.XmlSchemaSet.
+        //
+        // Возврат:
+        //     Коллекция глобальных простых и сложных типов.         
+        IXmlSchemaObjectTable GlobalTypes();
+        void Add([MarshalAs(UnmanagedType.LPWStr)] string nameSpase, [MarshalAs(UnmanagedType.LPWStr)] string FileName);
+        void Compile();
+        //
+        // Сводка:
+        //     Возвращает значение, указывающее, является ли схемами языка определения схемы
+        //     XML в System.Xml.Schema.XmlSchemaSet были скомпилированы.
+        //
+        // Возврат:
+        //     true Если схемы в System.Xml.Schema.XmlSchemaSet были скомпилированы с момента
+        //     последнего схемы был добавлен или удален из System.Xml.Schema.XmlSchemaSet; в
+        //     противном случае — false.
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool IsCompiled();
+        //
+        // Сводка:
+        //     Указывает обработчик событий, получающий сведения об ошибках проверки схем языка
+        //     определения схем XML (XSD).
+        void AddValidationEventHandler(IXMLValidatorCallBack v);
+        //
+        // Сводка:
+        //     Повторная обработка схему языка XSD определения схемы XML, который уже существует
+        //     в System.Xml.Schema.XmlSchemaSet.
+        //
+        // Параметры:
+        //   schema:
+        //     Схема, которую необходимо обработать повторно.
+        //
+        // Возврат:
+        //     System.Xml.Schema.XmlSchema Объекта, если схема является допустимой схемой. Если
+        //     схема не является допустимым и System.Xml.Schema.ValidationEventHandler указан,
+        //     null возвращается и возникает соответствующее событие проверки. В противном случае
+        //     — System.Xml.Schema.XmlSchemaException возникает исключение.
+        //
+        // Исключения:
+        //   T:System.Xml.Schema.XmlSchemaException:
+        //     Недопустимая схема.
+        //
+        //   T:System.ArgumentNullException:
+        //     System.Xml.Schema.XmlSchema Объект, передаваемый как параметр — null.
+        //
+        //   T:System.ArgumentException:
+        //     System.Xml.Schema.XmlSchema Объект, передаваемый как параметр еще не существует
+        //     в System.Xml.Schema.XmlSchemaSet.
+        IXmlSchema Reprocess(IXmlSchema schema);
+        //
+        // Сводка:
+        //     Возвращает коллекцию всех определения схемы XML схем языка XSD в System.Xml.Schema.XmlSchemaSet.
+        //
+        // Возврат:
+        //     System.Collections.ICollection Объект, содержащий все схемы, которые были добавлены
+        //     в System.Xml.Schema.XmlSchemaSet. Если схемы не были добавлены в System.Xml.Schema.XmlSchemaSet,
+        //     пустой System.Collections.ICollection возвращается объект.
+        IXMLEnumerable Schemas();
+        //
+        // Сводка:
+        //     Возвращает коллекцию всех определения схемы XML схем языка XSD в System.Xml.Schema.XmlSchemaSet
+        //     относящихся к данному пространству имен.
+        //
+        // Параметры:
+        //   targetNamespace:
+        //     Схема targetNamespace свойство.
+        //
+        // Возврат:
+        //     System.Collections.ICollection Объект, содержащий все схемы, которые были добавлены
+        //     в System.Xml.Schema.XmlSchemaSet относящихся к данному пространству имен. Если
+        //     схемы не были добавлены в System.Xml.Schema.XmlSchemaSet, пустой System.Collections.ICollection
+        //     возвращается объект.
+        IXMLEnumerable Schemas([MarshalAs(UnmanagedType.LPWStr)] string targetNamespace);
+       
+        void Validate([MarshalAs(UnmanagedType.LPWStr)] string FileName);
+        IXmlSchemaValidator Validator([MarshalAs(UnmanagedType.LPWStr)] string FileName, out IXmlReader IReader);
+
+        IXmlSchemaObjectCollection DerivedFrom(IXmlSchemaType baseType);
+    }
+    public class TXmlSchemaSet : IXmlSchemaSet
+    {
+        private TXmlNamespaceManager m;
+        private IXMLValidatorCallBack cbk;
+        private readonly XmlSchemaSet s;
+        public TXmlSchemaSet()
+        {
+            s = new XmlSchemaSet();
+            s.XmlResolver = new XmlUrlResolver(); // ОБЯЗАТЕЛЬНО!!!
+            s.ValidationEventHandler += new ValidationEventHandler(ValidationCallback);
+            m = new TXmlNamespaceManager(s.NameTable);
+        }
+        void ValidationCallback(object sender, ValidationEventArgs args)=> cbk?.ValidationCallback(args.Severity, args.Message);
+        IXmlSchemaObjectTable IXmlSchemaSet.GlobalAttributes() => new TXmlSchemaObjectTable(s.GlobalAttributes);
+        public IXmlNamespaceManager Namespace() => m;
+        IXmlSchemaObjectTable IXmlSchemaSet.GlobalElements() => new TXmlSchemaObjectTable(s.GlobalElements);
+        IXmlSchemaObjectTable IXmlSchemaSet.GlobalTypes() => new TXmlSchemaObjectTable(s.GlobalTypes);
+        void IXmlSchemaSet.Add(string nameSpase, string FileName) => s.Add(nameSpase, FileName);
+        void IXmlSchemaSet.Compile()
+        {
+            s.Compile();
+            foreach(XmlSchema s in s.Schemas())
+            {
+                foreach(XmlQualifiedName n in s.Namespaces.ToArray())
+                {
+                    m.m.AddNamespace(n.Name, n.Namespace);
+                }
+            }
+        }
+            
+        bool IXmlSchemaSet.IsCompiled() => s.IsCompiled;
+        void IXmlSchemaSet.AddValidationEventHandler(IXMLValidatorCallBack v) => cbk = v;
+        IXmlSchema IXmlSchemaSet.Reprocess(IXmlSchema schema) => new TXmlSchema(s.Reprocess((schema as TXmlSchema).s));
+        IXMLEnumerable IXmlSchemaSet.Schemas() => new TXMLEnumerable(s.Schemas());
+        IXMLEnumerable IXmlSchemaSet.Schemas(string targetNamespace) => new TXMLEnumerable(s.Schemas(targetNamespace));
+        void IXmlSchemaSet.Validate(string FileName)
+        {
+            XmlReaderSettings settings = new XmlReaderSettings
+            {
+                ValidationType = ValidationType.Schema,
+                Schemas = s
+            };
+            settings.ValidationEventHandler += ValidationCallback;
+
+            try
+            {
+                XmlReader reader = XmlReader.Create(FileName, settings);
+                // Parse the file.
+                while (reader.Read()) { };
+            }
+            catch (Exception e)
+            {
+                cbk.ValidationCallback(XmlSeverityType.Error, FileName + " | " + e.Message);
+            }
+        }
+        IXmlSchemaValidator IXmlSchemaSet.Validator(string FileName, out IXmlReader IReader)
+        {
+            XmlReader reader = XmlReader.Create(FileName);
+            IReader = new TXmlReader(reader);
+            return new TXmlSchemaValidator(reader.NameTable, s, new XmlNamespaceManager(reader.NameTable), XmlSchemaValidationFlags.None);
+        }
+        IXmlSchemaObjectCollection IXmlSchemaSet.DerivedFrom(IXmlSchemaType baseType)
+        {
+            XmlSchemaObjectCollection res = new XmlSchemaObjectCollection();
+            XmlSchemaType bt = (XmlSchemaType)(baseType as IXmlSchemaObject).XmlObject();
+            void AddDetived(XmlSchema sc)
+            {
+                foreach (XmlSchemaType st in sc.SchemaTypes.Values)
+                {
+                    if (XmlSchemaType.IsDerivedFrom(st, bt, XmlSchemaDerivationMethod.None))
+                    {
+                        if (!res.Contains(st) && (st != bt)) res.Add(st);
+                    }
+                }
+            }
+            foreach (XmlSchema sx in s.Schemas())
+            {
+                AddDetived(sx);
+                foreach (XmlSchemaExternal se in sx.Includes)
+                {
+                    AddDetived(se.Schema);
+                }
+            }
+            return new TXmlSchemaObjectCollection(res);
+        }
+        [DllExport(CallingConvention = CallingConvention.StdCall)]
+        public static void GetXmlSchemaSet(out IXmlSchemaSet OutD) => OutD = new TXmlSchemaSet();
+
     }
 }
 
