@@ -157,7 +157,7 @@ namespace XMLScemaToDelphi
                 if (o is XmlSchemaAppInfo) d = (o as XmlSchemaAppInfo).Markup;
                 else if (o is XmlSchemaDocumentation) d = (o as XmlSchemaDocumentation).Markup;
 
-                foreach (XmlNode n in d) s += n.Value + "\n\n";
+                foreach (XmlNode n in d) s += n.Value + "\r\n\r\n";
             }
             return s;
         }
@@ -484,12 +484,12 @@ namespace XMLScemaToDelphi
         IXmlSchemaType BaseXmlSchemaType();
 
 
-        [return: MarshalAs(UnmanagedType.U4)]
-        XmlTokenizedType TokenizedType();
+        //[return: MarshalAs(UnmanagedType.I4)]
+        /*XmlTokenizedType*/ int TokenizedType();
         //XmlTypeCode TypeCode();
 
-        [return: MarshalAs(UnmanagedType.U4)]
-        XmlSchemaDatatypeVariety Variety();
+        //[return: MarshalAs(UnmanagedType.I4)]
+        /*XmlSchemaDatatypeVariety*/ int Variety();
 
 
         [return: MarshalAs(UnmanagedType.U4)]
@@ -530,8 +530,8 @@ namespace XMLScemaToDelphi
             else return null;
         }
         IXmlSchemaType IXmlSchemaType.BaseXmlSchemaType() => GetXmlSchemaType(t.BaseXmlSchemaType);
-        XmlTokenizedType IXmlSchemaType.TokenizedType() => t.Datatype.TokenizedType;
-        XmlSchemaDatatypeVariety IXmlSchemaType.Variety() => t.Datatype.Variety;
+        int IXmlSchemaType.TokenizedType() => (t.Datatype == null) ? -1 : (int) t.Datatype.TokenizedType;
+        int IXmlSchemaType.Variety() => (t.Datatype == null) ? -1 : (int) t.Datatype.Variety;
         XmlSchemaDerivationMethod IXmlSchemaType.DerivedBy() => t.DerivedBy;
         XmlSchemaDerivationMethod IXmlSchemaType.Final() => t.Final;
         XmlSchemaDerivationMethod IXmlSchemaType.FinalResolved() => t.FinalResolved;
@@ -553,14 +553,14 @@ namespace XMLScemaToDelphi
     public interface IXmlSchemaParticle
     {
 
-        [return: MarshalAs(UnmanagedType.I4)]
-        decimal MinOccurs();
+       // [return: MarshalAs(UnmanagedType.I4)]
+        Int32 MinOccurs();
         // Возврат:
         //     Максимальное количество раз, которое может встречаться фрагмент. Значение по
         //     умолчанию — 1.
 
-        [return: MarshalAs(UnmanagedType.I4)]
-        decimal MaxOccurs();
+       // [return: MarshalAs(UnmanagedType.I4)]
+        Int32 MaxOccurs();
         ///
         /// Сводка:
         ///     Возвращает или задает число как строковое значение. Минимальное количество раз,
@@ -587,8 +587,12 @@ namespace XMLScemaToDelphi
     public abstract class TXmlSchemaParticle : TXmlSchemaAnnotated, IXmlSchemaParticle, IXmlSchemaAnnotated, IXmlSchemaObject
     {
         public TXmlSchemaParticle(XmlSchemaParticle p) : base(p) { }
-        decimal IXmlSchemaParticle.MinOccurs() => (x as XmlSchemaParticle).MinOccurs;
-        decimal IXmlSchemaParticle.MaxOccurs() => (x as XmlSchemaParticle).MaxOccurs;
+        Int32 IXmlSchemaParticle.MinOccurs() => (int)(x as XmlSchemaParticle).MinOccurs;
+        Int32 IXmlSchemaParticle.MaxOccurs()
+        {    
+            XmlSchemaParticle p = x as XmlSchemaParticle;
+            return (p.MaxOccurs > int.MaxValue) ? int.MaxValue : (int)p.MaxOccurs;
+        }
         string IXmlSchemaParticle.MinOccursString() => (x as XmlSchemaParticle).MinOccursString;
         string IXmlSchemaParticle.MaxOccursString() => (x as XmlSchemaParticle).MaxOccursString;
         public static IXmlSchemaParticle GetPaticle(XmlSchemaParticle p)
@@ -598,10 +602,11 @@ namespace XMLScemaToDelphi
             else if (p is XmlSchemaSequence) return new TXmlSchemaSequence(p as XmlSchemaSequence);
             else if (p is XmlSchemaGroupRef) return new TXmlSchemaGroupRef(p as XmlSchemaGroupRef);
             else if (p is XmlSchemaAny) return new TXmlSchemaAny(p as XmlSchemaAny);
-//            else if (p is XmlSchemaElement) return new TXmlSchemaElement(p as XmlSchemaElement);
+            else if (p is XmlSchemaElement) return new TXmlSchemaElement(p as XmlSchemaElement);
             else return null;
         }
-
+        [DllExport(CallingConvention = CallingConvention.StdCall)]
+        public static void GetXmlSchemaParticle(XmlSchemaParticle a, out IXmlSchemaParticle OutD) => OutD = GetPaticle(a);
     }
 
     [ComImport, Guid("13E48227-9074-4A5D-9BD2-7247278C55F3"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -797,12 +802,12 @@ namespace XMLScemaToDelphi
     }
     public class TXmlSchemaComplexType : TXmlSchemaType, IXmlSchemaType, IXmlSchemaComplexType, IXmlSchemaAnnotated, IXmlSchemaObject
     {
-        public TXmlSchemaComplexType(XmlSchemaComplexType t) : base(t) { }
+        public TXmlSchemaComplexType(XmlSchemaComplexType t) : base(t) { }//t.QualifiedName.Name == "CodeWithAuthorityType" 
 
         bool IXmlSchemaComplexType.IsAbstract() => (x as XmlSchemaComplexType).IsAbstract;
         XmlSchemaDerivationMethod IXmlSchemaComplexType.Block() => (x as XmlSchemaComplexType).Block;
         bool IXmlSchemaComplexType.IsMixed() => (x as XmlSchemaComplexType).IsMixed;
-        bool IXmlSchemaComplexType.SimpleContentModel() => (x as XmlSchemaComplexType).ContentModel is XmlSchemaComplexContent;
+        bool IXmlSchemaComplexType.SimpleContentModel() => (x as XmlSchemaComplexType).ContentModel is XmlSchemaSimpleContent;
         //IXmlSchemaParticle IXmlSchemaComplexType.Particle() => TXmlSchemaParticle.GetPaticle((x as XmlSchemaComplexType).Particle);
         XmlSchemaContentType IXmlSchemaComplexType.ContentType() => (x as XmlSchemaComplexType).ContentType;
         IXmlSchemaParticle IXmlSchemaComplexType.ContentTypeParticle() => TXmlSchemaParticle.GetPaticle((x as XmlSchemaComplexType).ContentTypeParticle);
@@ -902,6 +907,8 @@ namespace XMLScemaToDelphi
             else if (f is XmlSchemaWhiteSpaceFacet) return 13;
             else return 0;
         }
+        [DllExport(CallingConvention = CallingConvention.StdCall)]
+        public static void GetXmlSchemaFacet(XmlSchemaObject e, out IXmlSchemaFacet outD) => outD = new TXmlSchemaFacet(e as XmlSchemaFacet);
     }
     [ComImport, Guid("F421BE69-C385-4B48-B83C-6AE3B81F986C"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IXmlSchemaSimpleTypeRestriction
