@@ -11,6 +11,32 @@ using System.Windows.Markup;
 
 namespace XMLScemaToDelphi
 {
+    [ComImport, Guid("013E4993-B90F-444C-A861-3C7118DC0560"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface ICsString
+    {
+
+        [return: MarshalAs(UnmanagedType.LPWStr)]
+        string Value();
+    }
+    public class TCsString : ICsString
+    {
+        private readonly string val;
+        public TCsString(string val) => this.val = val;
+        string ICsString.Value() => val;
+        [DllExport(CallingConvention = CallingConvention.StdCall)]
+        public static void GetCsString(string s, out ICsString OutD)
+        {
+            OutD = null;
+            try
+            {
+                OutD = new TCsString(s);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("EXCEPTION is " + e.Message);
+            }
+        }
+    }
     [ComImport, Guid("4B538C5E-DC77-437C-893B-97488A82E509"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IXmlQualifiedName
     {
@@ -1657,8 +1683,23 @@ namespace XMLScemaToDelphi
 
         void ValidationCallback([MarshalAs(UnmanagedType.I4)] XmlSeverityType SeverityType,
                             [MarshalAs(UnmanagedType.LPWStr)] string ErrorMessage);
+
+        TXMLValidatorCallBack GetSelf();
+        void SetSelf(TXMLValidatorCallBack s);
     }
 
+    public class TXMLValidatorCallBack
+    {
+        IXMLValidatorCallBack cbk;
+        public ValidationEventHandler ev;
+        public TXMLValidatorCallBack(IXMLValidatorCallBack cbk)
+        {
+            this.cbk = cbk;
+            this.cbk.SetSelf(this);
+        }
+        public void ValidationCallback(object sender, ValidationEventArgs args) => cbk.ValidationCallback(args.Severity, args.Message);
+        public ValidationEventHandler evv => ValidationCallback;
+    }
     [ComImport, Guid("79CED196-FC1C-4032-8CB8-A6CD1E6C305C"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IXmlNamespaceManager
     {
@@ -1712,6 +1753,45 @@ namespace XMLScemaToDelphi
         ///     String.Empty. Если указано значение null, затем null возвращается.
         [return: MarshalAs(UnmanagedType.LPWStr)]
         string LookupPrefix([MarshalAs(UnmanagedType.LPWStr)] string uri);
+        //
+        // Сводка:
+        //     Извлекает из стека область видимости пространства имен.
+        //
+        // Возврат:
+        //     true Если остались области пространств имен в стеке; false Если отсутствуют дополнительные
+        //     пространства имен для раскрытия.
+        [return: MarshalAs(UnmanagedType.U1)]
+        bool PopScope();
+        //
+        // Сводка:
+        //     Заносит область видимости пространства имен в стек.
+        void PushScope();
+        //
+        // Сводка:
+        //     Добавляет заданное пространство имен в коллекцию.
+        //
+        // Параметры:
+        //   prefix:
+        //     Префикс, который требуется связать с добавляемым пространством имен. Используйте
+        //     String.Empty для добавления пространства имен по умолчанию. ПримечаниеЕсли System.Xml.XmlNamespaceManager
+        //     будет использоваться для разрешения пространств имен в выражении языка XML Path
+        //     (XPath), должен быть указан префикс. Если выражение XPath не содержит префикс,
+        //     предполагается, что универсальным кодом ресурса (URI) для пространства имен является
+        //     пустое пространство имен. Дополнительные сведения о выражениях XPath и System.Xml.XmlNamespaceManager,
+        //     обратитесь к System.Xml.XmlNode.SelectNodes(System.String) и System.Xml.XPath.XPathExpression.SetContext(System.Xml.XmlNamespaceManager)
+        //     методы.
+        //
+        //   uri:
+        //     Добавляемое пространство имен.
+        //
+        // Исключения:
+        //   T:System.ArgumentException:
+        //     Значение для prefix «xml» или «xmlns».
+        //
+        //   T:System.ArgumentNullException:
+        //     Значение для prefix или uri — null.
+        void AddNamespace([MarshalAs(UnmanagedType.LPWStr)] string prefix, [MarshalAs(UnmanagedType.LPWStr)] string uri);
+
     }
     public class TXmlNamespaceManager : IXmlNamespaceManager
     {
@@ -1721,6 +1801,9 @@ namespace XMLScemaToDelphi
         bool IXmlNamespaceManager.HasNamespace(string prefix) => m.HasNamespace(prefix);
         string IXmlNamespaceManager.LookupNamespace(string prefix) => m.LookupNamespace(prefix);
         string IXmlNamespaceManager.LookupPrefix(string uri) => m.LookupPrefix(uri);
+        bool IXmlNamespaceManager.PopScope() => m.PopScope();
+        void IXmlNamespaceManager.PushScope() => m.PushScope();
+        void IXmlNamespaceManager.AddNamespace(string prefix, string uri) => m.AddNamespace(prefix, uri);
     }
 
     [ComImport, Guid("0B02EBF5-71EA-44BA-92A3-5373E05B06D5"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -1815,6 +1898,12 @@ namespace XMLScemaToDelphi
         XmlSchemaContentType IComXmlSchemaInfo.ContentType() => x.ContentType;
     }
 
+    //[ComImport, Guid("0B02EBF5-71EA-44BA-92A3-5373E05B06D5"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    //public interface IXmlNode
+    //{
+    //    XmlNode
+    //}
+
     [ComImport, Guid("C565ABD6-CE6F-48D2-B796-505936CEAD9C"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IXmlSchemaValidator
     {
@@ -1823,6 +1912,7 @@ namespace XMLScemaToDelphi
         ///     System.Xml.Schema.ValidationEventHandler Получает предупреждений проверки схемы
         ///     и ошибки, возникшие при проверке схемы.
         void AddValidationEventHandler(IXMLValidatorCallBack v);
+        void DelValidationEventHandler(IXMLValidatorCallBack v);
         ///
         /// Сводка:
         ///     Завершает проверку и проверяет ограничения идентификации для всего документа
@@ -2144,16 +2234,17 @@ namespace XMLScemaToDelphi
     public class TXmlSchemaValidator : IXmlSchemaValidator
     {
         public readonly XmlSchemaValidator v;
-        private IXMLValidatorCallBack cbk;
+        //private IXMLValidatorCallBack cbk;
         private readonly TXmlSchemaInfo inf;
         public TXmlSchemaValidator(XmlNameTable nameTable, XmlSchemaSet schemas, IXmlNamespaceResolver namespaceResolver, XmlSchemaValidationFlags validationFlags)
         {
             v = new XmlSchemaValidator(nameTable, schemas, namespaceResolver, validationFlags);
-            v.ValidationEventHandler += ValidationCallback;
+          //  v.ValidationEventHandler += ValidationCallback;
             inf = new TXmlSchemaInfo();
         }
-        void ValidationCallback(object sender, ValidationEventArgs args) => cbk?.ValidationCallback(args.Severity, args.Message);
-        void IXmlSchemaValidator.AddValidationEventHandler(IXMLValidatorCallBack ev) => cbk = ev;
+        //void ValidationCallback(object sender, ValidationEventArgs args) => cbk?.ValidationCallback(args.Severity, args.Message);
+        void IXmlSchemaValidator.AddValidationEventHandler(IXMLValidatorCallBack ev) => v.ValidationEventHandler += new TXMLValidatorCallBack(ev).evv;
+        void IXmlSchemaValidator.DelValidationEventHandler(IXMLValidatorCallBack ev) => v.ValidationEventHandler -= ev.GetSelf().evv;
         void IXmlSchemaValidator.EndValidation() => v.EndValidation();
         void IXmlSchemaValidator.GetExpectedAttributes(out XmlSchemaAttribute[] Attributes, out int Count)
         {
@@ -2182,7 +2273,10 @@ namespace XMLScemaToDelphi
         string IXmlSchemaValidator.ValidateAttribute(string localName, string namespaceUri, string attributeValue, out IComXmlSchemaInfo schemaInfo)
         {
             schemaInfo = inf;
-            return v.ValidateAttribute(localName, namespaceUri, attributeValue, inf.x).ToString();
+            object o = v.ValidateAttribute(localName, namespaceUri, attributeValue, inf.x);
+            if (o != null) return o.ToString();
+            else return "";
+            // return v.ValidateAttribute(localName, namespaceUri, attributeValue, inf.x).ToString();
         }
         void IXmlSchemaValidator.ValidateElement(string localName, string namespaceUri, out IComXmlSchemaInfo schemaInfo)
         {
@@ -2926,7 +3020,7 @@ namespace XMLScemaToDelphi
     [ComImport, Guid("CEAD7A91-2DAC-44E1-8425-F32E1A23DCE3"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IXmlSchemaSet
     {
-        IXmlNamespaceManager Namespace();
+        IXmlNamespaceManager CreateNamespace();
         //
         // Сводка:
         //     Получает все глобальные атрибуты в определении схемы XML схем языка XSD в System.Xml.Schema.XmlSchemaSet.
@@ -2967,6 +3061,7 @@ namespace XMLScemaToDelphi
         //     Указывает обработчик событий, получающий сведения об ошибках проверки схем языка
         //     определения схем XML (XSD).
         void AddValidationEventHandler(IXMLValidatorCallBack v);
+        void DelValidationEventHandler(IXMLValidatorCallBack v);
         //
         // Сводка:
         //     Повторная обработка схему языка XSD определения схемы XML, который уже существует
@@ -3020,41 +3115,41 @@ namespace XMLScemaToDelphi
        
         void Validate([MarshalAs(UnmanagedType.LPWStr)] string FileName);
         IXmlSchemaValidator Validator([MarshalAs(UnmanagedType.LPWStr)] string FileName, out IXmlReader IReader);
+        IXmlSchemaValidator Validator(IXmlNamespaceManager m);
 
         IXmlSchemaObjectCollection DerivedFrom(IXmlSchemaType baseType);
     }
     public class TXmlSchemaSet : IXmlSchemaSet
     {
-        private TXmlNamespaceManager m;
-        private IXMLValidatorCallBack cbk;
+       // private TXmlNamespaceManager m;
+        //private IXMLValidatorCallBack cbk;
         private readonly XmlSchemaSet s;
         public TXmlSchemaSet()
         {
             s = new XmlSchemaSet();
             s.XmlResolver = new XmlUrlResolver(); // ОБЯЗАТЕЛЬНО!!!
-            s.ValidationEventHandler += new ValidationEventHandler(ValidationCallback);
-            m = new TXmlNamespaceManager(s.NameTable);
+          //  s.ValidationEventHandler += new ValidationEventHandler(ValidationCallback);
+         //   m = new TXmlNamespaceManager(s.NameTable);
         }
-        void ValidationCallback(object sender, ValidationEventArgs args)=> cbk?.ValidationCallback(args.Severity, args.Message);
+        //void ValidationCallback(object sender, ValidationEventArgs args)=> cbk?.ValidationCallback(args.Severity, args.Message);
         IXmlSchemaObjectTable IXmlSchemaSet.GlobalAttributes() => new TXmlSchemaObjectTable(s.GlobalAttributes);
-        public IXmlNamespaceManager Namespace() => m;
         IXmlSchemaObjectTable IXmlSchemaSet.GlobalElements() => new TXmlSchemaObjectTable(s.GlobalElements);
         IXmlSchemaObjectTable IXmlSchemaSet.GlobalTypes() => new TXmlSchemaObjectTable(s.GlobalTypes);
         void IXmlSchemaSet.Add(string nameSpase, string FileName) => s.Add(nameSpase, FileName);
         void IXmlSchemaSet.Compile()
         {
             s.Compile();
-            foreach(XmlSchema s in s.Schemas())
-            {
-                foreach(XmlQualifiedName n in s.Namespaces.ToArray())
-                {
-                    m.m.AddNamespace(n.Name, n.Namespace);
-                }
-            }
-        }
-            
+            //foreach(XmlSchema s in s.Schemas())
+            //{
+            //    foreach(XmlQualifiedName n in s.Namespaces.ToArray())
+            //    {
+            //       m.m.AddNamespace(n.Name, n.Namespace);
+            //    }
+            //}
+        }            
         bool IXmlSchemaSet.IsCompiled() => s.IsCompiled;
-        void IXmlSchemaSet.AddValidationEventHandler(IXMLValidatorCallBack v) => cbk = v;
+        void IXmlSchemaSet.AddValidationEventHandler(IXMLValidatorCallBack v) => s.ValidationEventHandler += new TXMLValidatorCallBack(v).evv;
+        void IXmlSchemaSet.DelValidationEventHandler(IXMLValidatorCallBack v) => s.ValidationEventHandler -= v.GetSelf().evv;
         IXmlSchema IXmlSchemaSet.Reprocess(IXmlSchema schema) => new TXmlSchema(s.Reprocess((schema as TXmlSchema).s));
         IXMLEnumerable IXmlSchemaSet.Schemas() => new TXMLEnumerable(s.Schemas());
         IXMLEnumerable IXmlSchemaSet.Schemas(string targetNamespace) => new TXMLEnumerable(s.Schemas(targetNamespace));
@@ -3065,24 +3160,30 @@ namespace XMLScemaToDelphi
                 ValidationType = ValidationType.Schema,
                 Schemas = s
             };
-            settings.ValidationEventHandler += ValidationCallback;
+            //settings.ValidationEventHandler += ValidationCallback;
 
-            try
-            {
+//            try
+//            {
                 XmlReader reader = XmlReader.Create(FileName, settings);
                 // Parse the file.
                 while (reader.Read()) { };
-            }
-            catch (Exception e)
-            {
-                cbk.ValidationCallback(XmlSeverityType.Error, FileName + " | " + e.Message);
-            }
+//            }
+//            catch (Exception e)
+//            {
+//                cbk.ValidationCallback(XmlSeverityType.Error, FileName + " | " + e.Message);
+//            }
         }
+        public IXmlNamespaceManager CreateNamespace() => new TXmlNamespaceManager(new NameTable());
         IXmlSchemaValidator IXmlSchemaSet.Validator(string FileName, out IXmlReader IReader)
         {
             XmlReader reader = XmlReader.Create(FileName);
             IReader = new TXmlReader(reader);
             return new TXmlSchemaValidator(reader.NameTable, s, new XmlNamespaceManager(reader.NameTable), XmlSchemaValidationFlags.None);
+        }
+        IXmlSchemaValidator IXmlSchemaSet.Validator(IXmlNamespaceManager m)
+        {
+            XmlNamespaceManager namespaceManager = (m as TXmlNamespaceManager).m;
+            return new TXmlSchemaValidator(namespaceManager.NameTable, s, namespaceManager, XmlSchemaValidationFlags.None);
         }
         IXmlSchemaObjectCollection IXmlSchemaSet.DerivedFrom(IXmlSchemaType baseType)
         {
@@ -3110,7 +3211,6 @@ namespace XMLScemaToDelphi
         }
         [DllExport(CallingConvention = CallingConvention.StdCall)]
         public static void GetXmlSchemaSet(out IXmlSchemaSet OutD) => OutD = new TXmlSchemaSet();
-
     }
 }
 
